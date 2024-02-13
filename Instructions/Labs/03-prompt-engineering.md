@@ -1,256 +1,235 @@
 ---
 lab:
-  title: アプリでプロンプト エンジニアリングを利用する
+    title: 'アプリでプロンプトエンジニアリングを活用する'
 ---
 
-# アプリでプロンプト エンジニアリングを利用する
+# アプリでプロンプトエンジニアリングを活用する
 
-Azure OpenAI Service を使用すると、開発者はチャットボットや言語モデルをはじめとして、人間の自然な言語を理解することに優れたその他のアプリケーションを作成できます。 Azure OpenAI では、事前トレーニング済みの AI モデルにアクセスできるだけでなく、アプリケーションの特定の要件を満たすためにこれらのモデルをカスタマイズおよび微調整するための一連の API やツールが提供されます。 この演習では、モデルを Azure OpenAI にデプロイし、独自のアプリケーションで使用してテキストを要約する方法について説明します。
+Azure OpenAIサービスを使用する際、開発者がプロンプトをどのように形成するかは、生成AIモデルがどのように応答するかに大きく影響します。Azure OpenAIモデルは、明確で簡潔な方法で要求された場合、コンテンツを調整しフォーマットすることができます。この演習では、類似のコンテンツに対する異なるプロンプトが、AIモデルの応答を形作り、要件をより満たすためにどのように役立つかを学びます。
 
-Azure OpenAI Service を使用する場合、開発者がプロンプトをどのように形成するかは、生成 AI モデルの応答方法に大きく影響します。 明瞭かつ簡潔に要求すれば、Azure OpenAI はコンテンツを調整し、書式設定を行うことができます。 この演習では、類似するコンテンツのさまざまなプロンプトが、要件をより十分に満たす AI モデルの応答を形成するためにどのように役立つかを学習します。
+この演習には約**25**分かかります。
 
-この演習には、約 **25** 分かかります。
+## Azure OpenAIリソースのプロビジョニング
 
-## 開始する前に
+まだお持ちでない場合は、AzureサブスクリプションにAzure OpenAIリソースをプロビジョニングしてください。
 
-Azure OpenAI Service へのアクセスが承認されている Azure サブスクリプションが必要になります。
-
-- 無料の Azure サブスクリプションにサインアップするには、[https://azure.microsoft.com/free](https://azure.microsoft.com/free) にアクセスしてください。
-- Azure OpenAI Service へのアクセスを要求するには、[https://aka.ms/oaiapply](https://aka.ms/oaiapply) にアクセスしてください。
-
-## Azure OpenAI リソースをプロビジョニングする
-
-Azure OpenAI モデルを使用する前に、Azure サブスクリプションに Azure OpenAI リソースをプロビジョニングする必要があります。
-
-1. [Azure portal](https://portal.azure.com) にサインインします。
-2. 次の設定で **Azure OpenAI** リソースを作成します。
-    - **サブスクリプション**: Azure OpenAI Service のアクセスが承認されている Azure サブスクリプション。
-    - **リソース グループ**: 既存のリソース グループを選択するか、任意の名前を使用して新規に作成します。
-    - **リージョン**: 使用できるリージョンを選択します。
-    - **名前**: 任意の一意の名前。
+1. `https://portal.azure.com`で**Azureポータル**にサインインします。
+2. 次の設定で**Azure OpenAI**リソースを作成します：
+    - **サブスクリプション**: *Azure OpenAIサービスへのアクセスが承認されたAzureサブスクリプションを選択*
+    - **リソースグループ**: *リソースグループを選択または作成*
+    - **リージョン**: *利用可能なリージョンから**ランダム**に選択*\*
+    - **名前**: *お好きなユニークな名前*
     - **価格レベル**: Standard S0
-3. デプロイが完了するまで待ちます。 次に、Azure portal で、デプロイされた Azure OpenAI リソースに移動します。
-4. **[キーとエンドポイント]** ページに移動し、後で使用するためにテキスト ファイルに保存します。
 
-## モデルをデプロイする
+    > \* Azure OpenAIリソースはリージョナルなクォータによって制限されています。ランダムにリージョンを選択することで、他のユーザーとサブスクリプションを共有するシナリオで単一のリージョンがクォータ制限に達するリスクを減らすことができます。演習の後半でクォータ制限に達した場合、別のリージョンで別のリソースを作成する必要があるかもしれません。
 
-Azure OpenAI API を使用するには、まず、**Azure OpenAI Studio** を介して使用するモデルをデプロイする必要があります。 デプロイが完了したら、アプリでそのモデルを参照します。
+3. デプロイが完了するのを待ちます。その後、AzureポータルでデプロイされたAzure OpenAIリソースに移動します。
 
-1. Azure OpenAI リソースの **[概要]** ページで、 **[探索]** ボタンを使用して、新しいブラウザー タブで Azure OpenAI Studio を開きます。または、[Azure OpenAI Studio](https://oai.azure.com/?azure-portal=true) に直接移動します。
-2. Azure OpenAI Studio の [**デプロイ**] ページで、既存のモデルのデプロイを表示します。 まだデプロイがない場合は、次の設定で **gpt-35-turbo-16k** モデルの新しいデプロイを作成します。
-    - **モデル**: gpt-35-turbo-16k
-    - **モデル バージョン**: 既定値に自動更新
-    - **デプロイの名前**: *任意の一意の名前*
+## モデルのデプロイ
+
+Azure OpenAIは、**Azure OpenAI Studio**というWebベースのポータルを提供しており、モデルのデプロイ、管理、探索を行うことができます。Azure OpenAIの探索を開始するために、Azure OpenAI Studioを使用してモデルをデプロイします。
+
+1. Azure OpenAIリソースの**概要**ページで、**Azure OpenAI Studioに移動**ボタンを使用して、新しいブラウザタブでAzure OpenAI Studioを開きます。
+2. Azure OpenAI Studioで、**デプロイ**ページに移動し、既存のモデルデプロイを表示します。まだお持ちでない場合は、以下の設定で**gpt-35-turbo-16k**モデルの新しいデプロイを作成します：
+    - **モデル**: gpt-35-turbo-16k *(16kモデルが利用できない場合は、gpt-35-turboを選択)*
+    - **モデルバージョン**: デフォルトに自動更新
+    - **デプロイ名**: *お好きなユニークな名前。この名前は後でラボで使用します。*
     - **詳細オプション**
-        - **コンテンツ フィルター**: 既定
-        - **1 分あたりのトークンのレート制限**: 5K\*
-        - **動的クォータを有効にする**: 有効
+        - **コンテンツフィルター**: デフォルト
+        - **分あたりのトークン数制限**: 5K\*
+        - **動的クォータの有効化**: 有効
 
-    > \* この演習は、1 分あたり 5,000 トークンのレート制限内で余裕を持って完了できます。またこの制限によって、同じサブスクリプションを使用する他のユーザーのために容量を残すこともできます。
+    > \* 分あたり5,000トークンの制限は、この演習を完了するのに十分であり、同じサブスクリプションを使用する他の人のための容量も残しておきます。
 
-> **注**: 一部のリージョンでは、新しいモデル デプロイ インターフェイスに [**モデル バージョン**] オプションが表示されません。 この場合は、オプションを設定せずにそのまま続行してください
+## プロンプトエンジニアリング技術の探索
 
-## チャット プレイグラウンドでプロンプト エンジニアリングを適用する
+まず、チャットプレイグラウンドでいくつかのプロンプトエンジニアリング技術を探ってみましょう。
 
-アプリを使用する前に、プロンプト エンジニアリングによってプレイグラウンドでのモデルの応答がどのように向上するかを調べます。 この最初の例では、ユーモアのある名前を持つ動物の Python アプリを作成しようとしているとします。
+1. `https://oai.azure.com`の**Azure OpenAI Studio**で、**プレイグラウンド**セクションの**チャット**ページを選択します。**チャット**プレイグラウンドページは、以下の3つの主要なセクションで構成されています：
+    - **アシスタント設定** - モデルの応答の文脈を設定するために使用されます。
+    - **チャットセッション** - チャットメッセージを送信し、応答を表示するために使用されます。
+    - **構成** - モデルデプロイの設定を構成するために使用されます。
+2. **構成**セクションで、モデルデプロイが選択されていることを確認します。
+3. **アシスタント設定**エリアで、デフォルトのシステムメッセージテンプレートを選択し、チャットセッションの文脈を設定します。デフォルトのシステムメッセージは*あなたは人々が情報を見つけるのを助けるAIアシスタントです*です。
+4. **チャットセッション**で、以下のクエリを送信します：
 
-1. [Azure OpenAI Studio](https://oai.azure.com/?azure-portal=true) の左側のペインで、 **[チャット]** プレイグラウンドに移動します。
-1. **[構成]** で、モデル デプロイが選択されていることを確認します。
-1. 上部の **[アシスタントのセットアップ]** セクションで、システム メッセージとして「`You are a helpful AI assistant`」と入力します。
-1. **[チャット セッション]** セクションで、次のプロンプトを入力し、*Enter* キーを押します。
-
-    ```code
-   1. Create a list of animals
-   2. Create a list of whimsical names for those animals
-   3. Combine them randomly into a list of 25 animal and name pairs
+    ```
+    これはどのような記事ですか？
+    ---
+    カリフォルニアで深刻な干ばつの可能性
+    
+    数百万人のカリフォルニア州民が、干ばつが地域の広い範囲に成長する水不足をもたらすと脅かしているため、水が少なくなり、芝生が乾くことに備えています。
+    
+    干ばつの深刻さを示す顕著な兆候として、南カリフォルニアの当局は、約800万人の住民に対して週に1日だけの屋外での水使用を制限する前例のない行動を宣言しました。
+    
+    日常生活がどのように変わるかについては、人々がより乾燥した通常の状態に適応するにつれて、まだ多くが決定されていません。しかし、当局は状況が深刻であり、年後半にはさらに厳しい制限が課される可能性があると警告しています。
     ```
 
-1. モデルは回答を番号付きリストに分けて応答し、それらはおそらくプロンプトを満たしています。 これは適切な応答ですが、求めている回答ではありません。
-1. 次に、システム メッセージを更新して、`You are an AI assistant helping write python code. Complete the app based on provided comments` という指示を含めます。 **[変更内容を保存]** をクリックします。
-1. 指示を Python コメントとして書式設定します。 次のプロンプトをモデルに送信します。
+    応答は記事の説明を提供します。しかし、記事の分類にもっと具体的な形式を求めたいとします。
 
-    ```code
-   # 1. Create a list of animals
-   # 2. Create a list of whimsical names for those animals
-   # 3. Combine them randomly into a list of 25 animal and name pairs
-    ```
+5. **アシスタント設定**セクションで、システムメッセージを`あなたはニュース記事を分類するニュースアグリゲーターです。`に変更します。
 
-1. モデルは、コメントで要求された内容を実行する完全な Python コードで正しく応答するはずです。
-1. 次に、記事を分類しようとしている場合のいくつかの短いプロンプトの影響を確認します。 システム メッセージに戻り、もう一度「`You are a helpful AI assistant`」と入力し、変更を保存します。 これにより、新しいチャット セッションが作成されます。
-1. 次のプロンプトをモデルに送信します。
-
-    ```code
-   Severe drought likely in California
-
-   Millions of California residents are bracing for less water and dry lawns as drought threatens to leave a large swath of the region with a growing water shortage.
-   
-   In a remarkable indication of drought severity, officials in Southern California have declared a first-of-its-kind action limiting outdoor water use to one day a week for nearly 8 million residents.
-   
-   Much remains to be determined about how daily life will change as people adjust to a drier normal. But officials are warning the situation is dire and could lead to even more severe limits later in the year.
-    ```
-
-1. 応答では、カリフォルニアの干ばつに関するいくつかの情報が提供されます。 不適切な応答ではありませんが、求めている分類ではありません。
-1. システム メッセージの近くにある **[アシスタントのセットアップ]** セクションで、 **[例の追加]** ボタンを選択します。 次の例を追加します。
+6. 新しいシステムメッセージの下で、**例を追加**ボタンを選択します。以下の例を追加します。
 
     **ユーザー:**
-
-    ```code
-   New York Baseballers Wins Big Against Chicago
-   
-   New York Baseballers mounted a big 5-0 shutout against the Chicago Cyclones last night, solidifying their win with a 3 run homerun late in the bottom of the 7th inning.
-   
-   Pitcher Mario Rogers threw 96 pitches with only two hits for New York, marking his best performance this year.
-   
-   The Chicago Cyclones' two hits came in the 2nd and the 5th innings, but were unable to get the runner home to score.
+    
     ```
-
+    これはどのような記事ですか？
+    ---
+    ニューヨークの野球選手がシカゴに大勝
+    
+    昨夜、ニューヨークの野球選手はシカゴサイクロンズに対して大きな5-0の完封勝利を収め、7回裏に3ランホームランで勝利を固めました。
+    
+    ニューヨークのピッチャー、マリオ・ロジャースは96球を投げ、たった2ヒットで、今年最高のパフォーマンスをマークしました。
+    
+    シカゴサイクロンズの2ヒットは2回と5回に出ましたが、ランナーをホームに帰して得点することはできませんでした。
+    ```
+    
     **アシスタント:**
-
-    ```code
-   Sports
+    
+    ```
+    スポーツ
     ```
 
-1. 次のテキストを含む別の例を追加します。
+7. 次のテキストで別の例を追加します。
 
     **ユーザー:**
-
-    ```code
-    Joyous moments at the Oscars
     
-    The Oscars this past week where quite something!
-    
-    Though a certain scandal might have stolen the show, this year's Academy Awards were full of moments that filled us with joy and even moved us to tears.
-    These actors and actresses delivered some truly emotional performances, along with some great laughs, to get us through the winter.
-    
-    From Robin Kline's history-making win to a full performance by none other than Casey Jensen herself, don't miss tomorrows rerun of all the festivities.
     ```
-
+    この記事を分類してください：
+    ---
+    オスカー賞での喜びの瞬間
+    
+    先週のオスカー賞は本当に何かがありました！
+    
+    あるスキャンダルがショーを盗んだかもしれませんが、今年のアカデミー賞には、私たちを喜びで満たし、涙さえも誘う瞬間がたくさんありました。
+    これらの俳優と女優は、冬を乗り切るために、本当に感動的なパフォーマンスと素晴らしい笑いを提供しました。
+    
+    ロビン・クラインの歴史的な勝利から、ケーシー・ジェンセン自身によるフルパフォーマンスまで、明日のお祭りの再放送をお見逃しなく。
+    ```
+    
     **アシスタント:**
-
-    ```code
-    Entertainment
-    ```
-
-1. 変更した内容をアシスタントのセットアップに保存し、カリフォルニアの干ばつに関する同じプロンプトを送信して、便宜上、ここでもう一度提供します。
-
-    ```code
-   Severe drought likely in California
-
-   Millions of California residents are bracing for less water and dry lawns as drought threatens to leave a large swath of the region with a growing water shortage.
-   
-   In a remarkable indication of drought severity, officials in Southern California have declared a first-of-its-kind action limiting outdoor water use to one day a week for nearly 8 million residents.
-   
-   Much remains to be determined about how daily life will change as people adjust to a drier normal. But officials are warning the situation is dire and could lead to even more severe limits later in the year.
-    ```
-
-1. 今度は、指示がなくても、モデルは適切な分類で応答するはずです。
-
-## Cloud Shell でアプリケーションを設定する
-
-Azure OpenAI モデルと統合する方法を示すために、Azure 上の Cloud Shell で実行される短いコマンドライン アプリケーションを使用します。 Cloud Shell を操作するには、新しいブラウザー タブを開きます。
-
-1. [Azure portal](https://portal.azure.com?azure-portal=true) で、ページ上部の検索ボックスの右側にある **[>_]** (*Cloud Shell*) ボタンを選択します。 ポータルの下部に Cloud Shell ペインが開きます。
-
-    ![上部の検索ボックスの右側にあるアイコンをクリックして Cloud Shell を開始している状態のスクリーンショット。](../media/cloudshell-launch-portal.png#lightbox)
-
-2. Cloud Shell を初めて開くと、使用するシェルの種類 (*Bash* または *PowerShell*) を選択するように求められる場合があります。 **[Bash]** を選択します。 このオプションが表示されない場合は、この手順をスキップします。  
-
-3. Cloud Shell 用のストレージを作成するように求められたら、 **[詳細設定の表示]** を選び、次の設定を選びます。
-    - **[サブスクリプション]**: 自分のサブスクリプション
-    - **Cloud Shell リージョン**: 使用できるリージョンを選びます
-    - **Show VNET isolation setings (VNET 分離の設定を表示する)** : オフ
-    - **リソース グループ**: Azure OpenAI リソースをプロビジョニングした既存のリソース グループを使います
-    - **ストレージ アカウント**: 一意の名前で新しいストレージ アカウントを作成します
-    - **ファイル共有**: 一意の名前で新しいファイル共有を作成します
-
-    その後、ストレージが作成されるのを 1 分程度待ちます。
-
-    > **注**: Azure サブスクリプションに既に Cloud Shell を設定している場合は、⚙️ メニューの **[ユーザー設定のリセット]** オプションを使用して、最新バージョンの Python と .NET Framework がインストールされていることを確かめる必要がある場合があります。
-
-4. Cloud Shell ペインの左上に表示されるシェルの種類が *Bash* であることを確認します。 *PowerShell* の場合は、ドロップダウン メニューを使用して *Bash* に切り替えます。
-
-5. ターミナルが起動したら、次のコマンドを入力してサンプル アプリケーションをダウンロードし、`azure-openai` という名前のフォルダーに保存します。
-
-    ```bash
-   rm -r azure-openai -f
-   git clone https://github.com/MicrosoftLearning/mslearn-openai azure-openai
-    ```
-
-6. ファイルは、**azure-openai** という名前のフォルダーにダウンロードされます。 次のコマンドを使用して、この演習のラボ ファイルに移動します。
-
-    ```bash
-   cd azure-openai/Labfiles/03-prompt-engineering
-    ```
-
-7. 次のコマンドを実行して、組み込みのコード エディターを開きます。
-
-    ```bash
-    code .
-    ```
-
-8. コード エディターで **prompts** フォルダーを展開し、アプリケーションでモデルに送信するプロンプトを含むテキスト ファイルを確認します。
-
-    > **ヒント**: Azure Cloud Shell コード エディターを使用して Azure Cloud Shell 環境でファイルを操作する方法の詳細については、[Azure Cloud Shell コード エディターのドキュメント](https://learn.microsoft.com/azure/cloud-shell/using-cloud-shell-editor)を参照してください。
-
-## アプリケーションの作成
-
-この演習では、Azure OpenAI リソースの使用を有効にするために、アプリケーションのいくつかの重要な部分を完成します。 C# と Python の両方のアプリケーションが提供されています。 どちらのアプリにも同じ機能があります。
-
-1. コード エディターで、言語の設定に応じて **CSharp** または **Python** フォルダーを展開します。
-
-2. 言語の構成ファイルを開きます。
-
-    - C#: `appsettings.json`
-    - Python: `.env`
     
-3. 構成値を更新して、作成した Azure OpenAI リソースの**エンドポイント**や**キー**と、デプロイしたモデル名を含めるようにします。 ファイルを保存します。
+    ```
+    エンターテイメント
+    ```
 
-4. コンソール ウィンドウで次のコマンドを入力して、優先言語のフォルダーに移動し、必要なパッケージをインストールします。
+8. **アシスタント設定**セクションの上部にある**変更を保存**ボタンを使用して、システムメッセージを更新します。
 
-    **C#**
+9. **チャットセッション**セクションで、以下のプロンプトを再送信します：
 
-    ```bash
-    cd CSharp
+    ```
+    これはどのような記事ですか？
+    ---
+    カリフォルニアで深刻な干ばつの可能性
+    
+    数百万人のカリフォルニア州民が、干ばつが地域の広い範囲に成長する水不足をもたらすと脅かしているため、水が少なくなり、芝生が乾くことに備えています。
+    
+    干ばつの深刻さを示す顕著な兆候として、南カリフォルニアの当局は、約800万人の住民に対して週に1日だけの屋外での水使用を制限する前例のない行動を宣言しました。
+    
+    日常生活がどのように変わるかについては、人々がより乾燥した通常の状態に適応するにつれて、まだ多くが決定されていません。しかし、当局は状況が深刻であり、年後半にはさらに厳しい制限が課される可能性があると警告しています。
+    ```
+
+    より具体的なシステムメッセージと期待されるクエリと応答の例の組み合わせにより、結果の一貫した形式が得られます。
+
+10. **アシスタント設定**セクションで、システムメッセージをデフォルトのテンプレートに戻し、例がない状態で`あなたは人々が情報を見つけるのを助けるAIアシスタントです。`に設定して、変更を保存します。
+
+11. **チャットセッション**セクションで、以下のプロンプトを送信します：
+
+    ```
+    # 1. 動物のリストを作成する
+    # 2. それらの動物に対して風変わりな名前のリストを作成する
+    # 3. 25組の動物と名前のペアをランダムに組み合わせる
+    ```
+
+    モデルは、番号付きリストに分けられたプロンプトに対する適切な応答を提供する可能性が高いです。これは適切な応答ですが、実際には説明したタスクを実行するPythonプログラムをモデルに書いてもらいたかったとします。
+
+12. システムメッセージを`あなたはPythonコードを書くのを助けるコーディングアシスタントです。`に変更し、**変更を保存**をクリックします。
+13. 以下のプロンプトをモデルに再送信します：
+
+    ```
+    # 1. 動物のリストを作成する
+    # 2. それらの動物に対して風変わりな名前のリストを作成する
+    # 3. 25組の動物と名前のペアをランダムに組み合わせる
+    ```
+
+    モデルは、コメントで要求されたことを実行するPythonコードで正しく応答するはずです。
+
+## Visual Studio Codeでアプリの開発準備をする
+
+Azure OpenAIサービスSDKを使用するアプリでプロンプトエンジニアリングの使用を探ってみましょう。アプリの開発にはVisual Studio Codeを使用します。アプリのコードファイルはGitHubリポジトリに提供されています。
+
+> **ヒント**: すでに**mslearn-openai**リポジトリをクローンしている場合は、Visual Studio Codeで開いてください。そうでない場合は、以下の手順に従って開発環境にクローンしてください。
+
+1. Visual Studio Codeを起動します。
+2. パレットを開く（SHIFT+CTRL+P）し、**Git: Clone**コマンドを実行して`https://github.com/MicrosoftLearning/mslearn-openai`リポジトリをローカルフォルダにクローンします（どのフォルダでも構いません）。
+3. リポジトリがクローンされたら、Visual Studio Codeでフォルダを開きます。
+4. リポジトリ内のC#コードプロジェクトをサポートするための追加ファイルがインストールされるのを待ちます。
+
+    > **注**: ビルドとデバッグに必要なアセットを追加するように求められた場合は、**今はしない**を選択してください。
+
+## アプリケーションを設定する
+
+C#とPythonの両方のアプリケーションが提供されており、要約のテストに使用するサンプルテキストファイルもあります。どちらのアプリも同じ機能を備えています。まず、Azure OpenAIリソースを使用するためにアプリケーションのいくつかの重要な部分を完成させます。
+
+1. Visual Studio Codeで、**エクスプローラー**ペインを開き、**Labfiles/03-prompt-engineering**フォルダに移動し、言語の好みに応じて**CSharp**または**Python**フォルダを展開します。各フォルダには、Azure OpenAI機能を統合するアプリの言語固有のファイルが含まれています。
+2. コードファイルが含まれている**CSharp**または**Python**フォルダを右クリックし、統合ターミナルを開きます。次に、言語の好みに応じた適切なコマンドを実行してAzure OpenAI SDKパッケージをインストールします：
+
+    **C#**:
+
+    ```
     dotnet add package Azure.AI.OpenAI --version 1.0.0-beta.9
     ```
 
-    **Python**
+    **Python**:
 
-    ```bash
-    cd Python
-    pip install python-dotenv
+    ```
     pip install openai==1.2.0
     ```
 
-5. 選択した言語のフォルダーに移動し、コード ファイルを選択して、必要なライブラリを追加します。
+3. **エクスプローラー**ペインの**CSharp**または**Python**フォルダで、好みの言語の構成ファイルを開きます。
 
-    **C#**
+    - **C#**: appsettings.json
+    - **Python**: .env
+    
+4. 構成値を更新して以下を含めます：
+    - Azure OpenAIリソースから作成した**エンドポイント**と**キー**（AzureポータルのAzure OpenAIリソースの**キーとエンドポイント**ページで利用可能）
+    - モデルデプロイメントに指定した**モデル名**（Azure OpenAI Studioの**デプロイ**ページで利用可能）。
+5. 構成ファイルを保存します。
+
+## Azure OpenAIサービスを使用するコードを追加する
+
+これで、デプロイされたモデルを使用するためにAzure OpenAI SDKを使用する準備が整いました。
+
+1. **エクスプローラー**ペインの**CSharp**または**Python**フォルダで、好みの言語のコードファイルを開き、***Add Azure OpenAI package***というコメントをAzure OpenAI SDKライブラリを追加するコードに置き換えます：
+
+    **C#**: Program.cs
 
     ```csharp
     // Add Azure OpenAI package
     using Azure.AI.OpenAI;
     ```
 
-    **Python**
+    **Python**: prompt-engineering.py
 
     ```python
-    # Add OpenAI import
+    # Add Azure OpenAI package
     from openai import AzureOpenAI
     ```
 
-6. 選択した言語のアプリケーション コードを開き、クライアントを構成するために必要なコードを追加します。
+2. コードファイルで、***Configure the Azure OpenAI client***というコメントを見つけ、Azure OpenAIクライアントを設定するコードを追加します：
 
-    **C#**
+    **C#**: Program.cs
 
     ```csharp
-    // Initialize the Azure OpenAI client
+    // Configure the Azure OpenAI client
     OpenAIClient client = new OpenAIClient(new Uri(oaiEndpoint), new AzureKeyCredential(oaiKey));
     ```
 
-    **Python**
+    **Python**: prompt-engineering.py
 
     ```python
-    # Initialize the Azure OpenAI client
+    # Configure the Azure OpenAI clientt
     client = AzureOpenAI(
             azure_endpoint = azure_oai_endpoint, 
             api_key=azure_oai_key,  
@@ -258,12 +237,12 @@ Azure OpenAI モデルと統合する方法を示すために、Azure 上の Clo
             )
     ```
 
-7. Azure OpenAI モデルを呼び出す関数で、書式を設定して要求をモデルに送信するコードを追加します。
+3. Azure OpenAIモデルを呼び出す関数で、***Format and send the request to the model***というコメントの下に、モデルへのリクエストをフォーマットして送信するコードを追加します。
 
-    **C#**
+    **C#**: Program.cs
 
     ```csharp
-    // Create chat completion options
+    // Format and send the request to the model
     var chatCompletionsOptions = new ChatCompletionsOptions()
     {
         Messages =
@@ -283,10 +262,10 @@ Azure OpenAI モデルと統合する方法を示すために、Azure 上の Clo
     string completion = completions.Choices[0].Message.Content;
     ```
 
-    **Python**
+    **Python**: prompt-engineering.py
 
     ```python
-    # Build the messages array
+    # Format and send the request to the model
     messages =[
         {"role": "system", "content": system_message},
         {"role": "user", "content": user_message},
@@ -301,31 +280,30 @@ Azure OpenAI モデルと統合する方法を示すために、Azure 上の Clo
     )
     ```
 
+4. コードファイルの変更を保存します。
+
 ## アプリケーションを実行する
 
-アプリが構成されたので、それを実行してモデルに要求を送信し、応答を確認します。 異なるオプションの間で違いがあるのはプロンプトの内容のみであり、他のすべてのパラメーター (トークン数や温度など) は要求ごとに変わりがないことがわかります。
+アプリが設定されたので、実行してモデルにリクエストを送り、応答を観察しましょう。異なるオプション間で唯一の違いはプロンプトの内容であり、他のパラメータ（トークン数や温度など）は各リクエストで同じです。
 
-各プロンプトは送信時にコンソールに表示され、生成される応答が、プロンプトの違いによってどのように異なるかを確認できます。
+各プロンプトは、プロンプトの違いがどのように異なる応答を生むかを見るために、送信されるとコンソールに表示されます。
 
-1. Cloud Shell bash ターミナルで、選択した言語のフォルダーに移動します。
-1. アプリケーションを実行します。ターミナルを拡張してブラウザー ウィンドウのほぼ全体に表示されるようにします。
+1. **エクスプローラー**ペインで、**Labfiles/03-prompt-engineering/prompts**フォルダを展開し、含まれている各テキストファイルを見てください。これらのテキストファイルには、アプリがモデルに送信できるさまざまなプロンプトが含まれています。
 
-    - **C#** : `dotnet run`
+2. インタラクティブなターミナルペインで、お好みの言語のフォルダコンテキストを確認してください。次に、アプリケーションを実行するために以下のコマンドを入力します。
+
+    - **C#**: `dotnet run`
     - **Python**: `python prompt-engineering.py`
 
-1. 最も基本的なプロンプトでは、オプション **1** を選択します。
-1. プロンプト入力と生成された出力を確認します。 AI モデルは、野生動物の救護に関する適切で一般的な概要を生成します。
-1. 次に、オプション **2** を選択して、野生動物の救護に関するいくつかの詳細と共に、概要メールを求めるプロンプトを提示します。
-1. プロンプト入力と生成された出力を確認します。 今度は、特定の動物と寄付の呼びかけを含む応答がメール形式で表示されます。
-1. 次に、オプション **3** を選択して、上記と同様のメールを要求します。ただし、追加の動物を含むテーブルを書式設定します。
-1. プロンプト入力と生成された出力を確認します。 今度は、特定の方法で書式設定された (この場合は、末尾付近にテーブルを含む) テキストを含む同様のメールが表示され、要求されたときに生成 AI モデルが出力をどのように書式設定できるかが示されます。
-1. 次に、オプション **4** を選択して、同様のメールを要求します。ただし、今度は、トーンの異なるシステム メッセージを指定します。
-1. プロンプト入力と生成された出力を確認します。 メールは同様の形式で表示されますが、今度は、よりくだけたトーンになります。 ジョークが含まれている可能性もあります。
+    > **ヒント**: ターミナルツールバーの**パネルサイズを最大化**（**^**）アイコンを使用して、コンソールテキストをより多く表示できます。
 
-多くの場合、温度を上げると、ランダム性が高くなるため、同じプロンプトを指定した場合でも応答が変化します。 異なる温度または top_p 値で複数回実行すると、同じプロンプトに対する応答にどのような影響があるかを確認できます。
+3. 最も基本的なプロンプトのオプション**1**を選択します。次に、プロンプト入力と生成された出力を観察してください。AIモデルは、野生動物救助についての良い一般的な紹介を生成する可能性が高いです。
+4. 次に、オプション**2**を選択して、野生動物救助についての詳細と共にイントロメールのプロンプトを送信してみてください。今回は、特定の動物が含まれたメールの形式と、寄付の呼びかけが見られる可能性が高いです。
+5. 次に、オプション**3**を選択して、前回と同様のメールを依頼しますが、追加の動物が含まれた整形式のテーブルがあるものを依頼してみてください。
+6. 次に、オプション**4**を選択して、別のメールを依頼しますが、今回はシステムメッセージの異なるトーンを指定してみてください。今回は、同様の形式のメールが表示される可能性が高いですが、はるかにカジュアルなトーンであることがわかります。冗談が含まれている可能性もあります！
 
-Azure OpenAI からの完全な応答を確認したい場合は、`printFullResponse` 変数を `True` に設定し、アプリを再実行できます。
+    > **ヒント**: Azure OpenAIからの完全な応答を見たい場合は、**printFullResponse**変数を`True`に設定して、アプリを再実行できます。
 
 ## クリーンアップ
 
-Azure OpenAI リソースでの作業が完了したら、[Azure portal](https://portal.azure.com/?azure-portal=true) 内のデプロイまたはリソース全体を必ず削除してください。
+Azure OpenAIリソースの使用が終わったら、**Azureポータル**の`https://portal.azure.com`でデプロイメントを削除するか、リソース全体を削除することを忘れないでください。
