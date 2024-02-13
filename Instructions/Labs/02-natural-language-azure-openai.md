@@ -1,157 +1,119 @@
 ---
 lab:
-  title: Azure OpenAI をアプリに統合する
+    title: 'Azure OpenAI をアプリに統合する'
 ---
 
 # Azure OpenAI をアプリに統合する
 
-Azure OpenAI Service を使用すると、開発者はチャットボットや言語モデルをはじめとして、人間の自然な言語を理解することに優れたその他のアプリケーションを作成できます。 Azure OpenAI では、事前トレーニング済みの AI モデルにアクセスできるだけでなく、アプリケーションの特定の要件を満たすためにこれらのモデルをカスタマイズおよび微調整するための一連の API やツールが提供されます。 この演習では、モデルを Azure OpenAI にデプロイし、独自のアプリケーションでそれを使用してテキストを要約する方法について学習します。
+Azure OpenAI サービスを使用すると、開発者は自然な人間の言語を理解するのに優れたチャットボット、言語モデル、その他のアプリケーションを作成できます。Azure OpenAI は、事前にトレーニングされた AI モデルへのアクセスを提供するとともに、これらのモデルをアプリケーションの特定の要件に合わせてカスタマイズし、微調整するための API やツールのスイートを提供します。この演習では、Azure OpenAI でモデルをデプロイし、テキストを要約するために自分のアプリケーションで使用する方法を学びます。
 
 この演習には約 **30** 分かかります。
 
-## 開始する前に
+## Azure OpenAI リソースのプロビジョニング
 
-Azure OpenAI Service へのアクセスが承認されている Azure サブスクリプションが必要になります。
+まだ持っていない場合は、Azure サブスクリプションに Azure OpenAI リソースをプロビジョニングします。
 
-- 無料の Azure サブスクリプションにサインアップするには、[https://azure.microsoft.com/free](https://azure.microsoft.com/free) にアクセスしてください。
-- Azure OpenAI Service へのアクセスを要求するには、[https://aka.ms/oaiapply](https://aka.ms/oaiapply) にアクセスしてください。
-
-## Azure OpenAI リソースをプロビジョニングする
-
-Azure OpenAI モデルを使用する前に、Azure サブスクリプションに Azure OpenAI リソースをプロビジョニングする必要があります。
-
-1. [Azure portal](https://portal.azure.com) にサインインします。
-2. 次の設定で **Azure OpenAI** リソースを作成します。
-    - **サブスクリプション**: Azure OpenAI Service のアクセスが承認されている Azure サブスクリプション。
-    - **リソース グループ**: 既存のリソース グループを選択するか、任意の名前を使用して新規に作成します。
-    - **リージョン**: 使用できるリージョンを選択します。
-    - **名前**: 任意の一意の名前。
+1. `https://portal.azure.com` で **Azure ポータル** にサインインします。
+2. 次の設定で **Azure OpenAI** リソースを作成します：
+    - **サブスクリプション**: *Azure OpenAI サービスへのアクセスが承認されている Azure サブスクリプションを選択します*
+    - **リソース グループ**: *リソース グループを選択または作成します*
+    - **リージョン**: *利用可能なリージョンから **ランダム** に選択します*\*
+    - **名前**: *あなたの選択による一意の名前*
     - **価格レベル**: Standard S0
-3. デプロイが完了するまで待ちます。 次に、Azure portal で、デプロイされた Azure OpenAI リソースに移動します。
-4. **[キーとエンドポイント]** ページに移動し、後で使用するためにテキスト ファイルに保存します。
 
-## モデルをデプロイする
+    > \* Azure OpenAI リソースはリージョナルなクォータによって制限されています。ランダムにリージョンを選択することで、他のユーザーとサブスクリプションを共有するシナリオで単一のリージョンがクォータ制限に達するリスクを減らします。演習の後半でクォータ制限に達した場合、別のリージョンで別のリソースを作成する必要があるかもしれません。
 
-Azure OpenAI API を使用するには、まず、**Azure OpenAI Studio** を介して使用するモデルをデプロイする必要があります。 デプロイが完了したら、アプリでそのモデルを参照します。
+3. デプロイが完了するのを待ちます。その後、Azure ポータルでデプロイされた Azure OpenAI リソースに移動します。
 
-1. Azure OpenAI リソースの **[概要]** ページで、 **[探索]** ボタンを使用して、新しいブラウザー タブで Azure OpenAI Studio を開きます。
-2. Azure OpenAI Studio の [**デプロイ**] ページで、既存のモデルのデプロイを表示します。 まだデプロイがない場合は、次の設定で **gpt-35-turbo-16k** モデルの新しいデプロイを作成します。
-    - **モデル**: gpt-35-turbo-16k
-    - **モデル バージョン**: 既定値に自動更新
-    - **デプロイの名前**: *任意の一意の名前*
+## モデルのデプロイ
+
+Azure OpenAI は、**Azure OpenAI Studio** という Web ベースのポータルを提供しており、これを使用してモデルのデプロイ、管理、探索を行うことができます。Azure OpenAI の探索を始めるために、Azure OpenAI Studio を使用してモデルをデプロイします。
+
+1. Azure OpenAI リソースの **概要** ページで、**Azure OpenAI Studio に移動** ボタンを使用して、新しいブラウザ タブで Azure OpenAI Studio を開きます。
+2. Azure OpenAI Studio の **デプロイ** ページで、既存のモデル デプロイを表示します。まだ持っていない場合は、次の設定で **gpt-3.5-turbo-16k** モデルの新しいデプロイを作成します：
+    - **モデル**: gpt-3.5-turbo-16k *(16k モデルが利用できない場合は、gpt-3.5-turbo を選択します)*
+    - **モデル バージョン**: デフォルトに自動更新
+    - **デプロイ名**: *あなたの選択による一意の名前。この名前は後でラボで使用します。*
     - **詳細オプション**
-        - **コンテンツ フィルター**: 既定
-        - **1 分あたりのトークンのレート制限**: 5K\*
-        - **動的クォータを有効にする**: 有効
+        - **コンテンツ フィルター**: デフォルト
+        - **分あたりのトークン数のレート制限**: 5K\*
+        - **動的クォータの有効化**: 有効
 
-    > \* この演習は、1 分あたり 5,000 トークンのレート制限内で余裕を持って完了できます。またこの制限によって、同じサブスクリプションを使用する他のユーザーのために容量を残すこともできます。
+    > \* 分あたり 5,000 トークンのレート制限は、この演習を完了するのに十分であり、同じサブスクリプションを使用する他の人のための容量も残しておきます。
 
-> **注**: 一部のリージョンでは、新しいモデル デプロイ インターフェイスに [**モデル バージョン**] オプションが表示されません。 この場合は、オプションを設定せずにそのまま続行してください
+## Visual Studio Codeでアプリの開発準備をする
 
-## Cloud Shell でアプリケーションを設定する
+Azure OpenAIアプリはVisual Studio Codeを使用して開発します。アプリのコードファイルはGitHubリポジトリに提供されています。
 
-Azure OpenAI モデルと統合する方法を示すために、Azure 上の Cloud Shell で実行される短いコマンドライン アプリケーションを使用します。 Cloud Shell を操作するには、新しいブラウザー タブを開きます。
+> **ヒント**: すでに**mslearn-openai**リポジトリをクローンしている場合は、Visual Studio Codeで開いてください。そうでない場合は、以下の手順に従って開発環境にクローンしてください。
 
-1. [Azure portal](https://portal.azure.com?azure-portal=true) で、ページ上部の検索ボックスの右側にある **[>_]** (*Cloud Shell*) ボタンを選択します。 ポータルの下部に Cloud Shell ペインが開きます。
+1. Visual Studio Codeを起動します。
+2. パレットを開く（SHIFT+CTRL+P）し、**Git: Clone**コマンドを実行して`https://github.com/MicrosoftLearning/mslearn-openai`リポジトリをローカルフォルダにクローンします（どのフォルダでも構いません）。
+3. リポジトリがクローンされたら、Visual Studio Codeでそのフォルダを開きます。
+4. リポジトリ内のC#コードプロジェクトをサポートする追加ファイルがインストールされるのを待ちます。
 
-    ![上部の検索ボックスの右側にあるアイコンをクリックして Cloud Shell を開始している状態のスクリーンショット。](../media/cloudshell-launch-portal.png#lightbox)
+    > **注**: ビルドとデバッグに必要なアセットを追加するように求められた場合は、**今はしない**を選択してください。
 
-2. Cloud Shell を初めて開くと、使用するシェルの種類 (*Bash* または *PowerShell*) を選択するように求められる場合があります。 **[Bash]** を選択します。 このオプションが表示されない場合は、この手順をスキップします。  
+## アプリケーションを設定する
 
-3. Cloud Shell 用のストレージを作成するように求められたら、 **[詳細設定の表示]** を選び、次の設定を選びます。
-    - **[サブスクリプション]**: 自分のサブスクリプション
-    - **Cloud Shell リージョン**: 使用できるリージョンを選びます
-    - **Show VNET isolation setings (VNET 分離の設定を表示する)** : オフ
-    - **リソース グループ**: Azure OpenAI リソースをプロビジョニングした既存のリソース グループを使います
-    - **ストレージ アカウント**: 一意の名前で新しいストレージ アカウントを作成します
-    - **ファイル共有**: 一意の名前で新しいファイル共有を作成します
+C#とPythonの両方のアプリケーションが提供されており、要約をテストするために使用するサンプルテキストファイルもあります。どちらのアプリも同じ機能を備えています。まず、Azure OpenAIリソースを使用するためにアプリケーションのいくつかの重要な部分を完成させます。
 
-    その後、ストレージが作成されるのを 1 分程度待ちます。
+1. Visual Studio Codeで、**エクスプローラー**ペインを開き、**Labfiles/02-nlp-azure-openai**フォルダに移動して、言語の好みに応じて**CSharp**または**Python**フォルダを展開します。各フォルダには、Azure OpenAI機能を統合するアプリの言語固有のファイルが含まれています。
+2. コードファイルが含まれている**CSharp**または**Python**フォルダを右クリックし、統合ターミナルを開きます。次に、言語の好みに応じた適切なコマンドを実行して、Azure OpenAI SDKパッケージをインストールします：
 
-    > **注**: Azure サブスクリプションに既に Cloud Shell を設定している場合は、⚙️ メニューの **[ユーザー設定のリセット]** オプションを使用して、最新バージョンの Python と .NET Framework がインストールされていることを確かめる必要がある場合があります。
+    **C#**:
 
-4. Cloud Shell ペインの左上に表示されるシェルの種類が *Bash* であることを確認します。 *PowerShell* の場合は、ドロップダウン メニューを使用して *Bash* に切り替えます。
-
-5. ターミナルが起動したら、次のコマンドを入力してサンプル アプリケーションをダウンロードし、`azure-openai` という名前のフォルダーに保存します。
-
-    ```bash
-   rm -r azure-openai -f
-   git clone https://github.com/MicrosoftLearning/mslearn-openai azure-openai
-    ```
-  
-6. ファイルは、**azure-openai** という名前のフォルダーにダウンロードされます。 次のコマンドを使用して、この演習のラボ ファイルに移動します。
-
-    ```bash
-   cd azure-openai/Labfiles/02-nlp-azure-openai
+    ```csharp
+    dotnet add package Azure.AI.OpenAI --version 1.0.0-beta.9
     ```
 
-7. 次のコマンドを実行して、組み込みのコード エディターを開きます。
+    **Python**:
 
-    ```bash
-    code .
-    ```
-
-8. コード エディターで**テキスト ファイル** フォルダーを展開し、**sample-text.txt** を選択して、モデルを使用して集計するテキストを表示します。
-
-    > **ヒント**: Azure Cloud Shell コード エディターを使用して Azure Cloud Shell 環境でファイルを操作する方法の詳細については、[Azure Cloud Shell コード エディターのドキュメント](https://learn.microsoft.com/azure/cloud-shell/using-cloud-shell-editor)を参照してください。
-
-## アプリケーションの作成
-
-この演習では、Azure OpenAI リソースの使用を有効にするために、アプリケーションのいくつかの重要な部分を完成します。 C# と Python の両方のアプリケーションが提供されています。 どちらのアプリにも同じ機能があります。
-
-1. コード エディターで、言語の設定に応じて **CSharp** または **Python** フォルダーを展開します。
-
-2. 言語の構成ファイルを開く
-
-    - C#: `appsettings.json`
-    - Python: `.env`
-    
-3. 構成値を更新して、作成した Azure OpenAI リソースの**エンドポイント**や**キー**と、デプロイしたモデル名を含めるようにします。 ファイルを保存します。
-
-4. コンソール ウィンドウで次のコマンドを入力して、優先言語のフォルダーに移動し、必要なパッケージをインストールします。
-
-    **C#**
-
-    ```bash
-   cd CSharp
-   dotnet add package Azure.AI.OpenAI --version 1.0.0-beta.9
-    ```
-
-    **Python**
-
-    ```bash
-    cd Python
-    pip install python-dotenv
+    ```python
     pip install openai==1.2.0
     ```
 
-5. 選択した言語のフォルダーに移動し、コード ファイルを選択して、必要なライブラリを追加します。
+3. **エクスプローラー**ペインの**CSharp**または**Python**フォルダで、好みの言語の設定ファイルを開きます。
 
-    **C#**
+    - **C#**: appsettings.json
+    - **Python**: .env
+    
+4. 次の設定値を更新します：
+    - AzureポータルのAzure OpenAIリソースの**キーとエンドポイント**ページで利用可能な**エンドポイント**と**キー**
+    - Azure OpenAI Studioの**デプロイ**ページで指定した**モデル名**
+5. 設定ファイルを保存します。
+
+## Azure OpenAI サービスを使用するためのコードを追加
+
+これで、デプロイされたモデルを利用するために Azure OpenAI SDK を使用する準備が整いました。
+
+1. **エクスプローラー** ペインで、**CSharp** または **Python** フォルダを開き、お好みの言語のコードファイルを開いて、コメント ***Add Azure OpenAI package*** を Azure OpenAI SDK ライブラリを追加するコードに置き換えます：
+
+    **C#**: Program.cs
 
     ```csharp
-    // Add Azure OpenAI package
-    using Azure.AI.OpenAI;
+   // Add Azure OpenAI package
+   using Azure.AI.OpenAI;
     ```
 
-    **Python**
+    **Python**: test-openai-model.py
 
     ```python
-    # Add OpenAI import
-    from openai import AzureOpenAI
+   # Add Azure OpenAI package
+   from openai import AzureOpenAI
     ```
 
-6. 言語のアプリケーション コードを開き、要求をビルドするために必要なコードを追加します。これにより、`prompt` や `temperature` などのモデルのさまざまなパラメーターが指定されます。
+2. お使いの言語のアプリケーションコードで、コメント ***Add code to build request...*** をリクエストを構築するための必要なコードに置き換えます。`prompt` や `temperature` など、モデルのさまざまなパラメータを指定します。
 
-    **C#**
+    **C#**: Program.cs
 
     ```csharp
-    // Initialize the Azure OpenAI client
-    OpenAIClient client = new OpenAIClient(new Uri(oaiEndpoint), new AzureKeyCredential(oaiKey));
-    
-    // Build completion options object
-    ChatCompletionsOptions chatCompletionsOptions = new ChatCompletionsOptions()
-    {
+   // Initialize the Azure OpenAI client
+   OpenAIClient client = new OpenAIClient(new Uri(oaiEndpoint), new AzureKeyCredential(oaiKey));
+
+   // Build completion options object
+   ChatCompletionsOptions chatCompletionsOptions = new ChatCompletionsOptions()
+   {
         Messages =
         {
             new ChatMessage(ChatRole.System, "You are a helpful assistant."),
@@ -160,55 +122,61 @@ Azure OpenAI モデルと統合する方法を示すために、Azure 上の Clo
         MaxTokens = 120,
         Temperature = 0.7f,
         DeploymentName = oaiModelName
-    };
-    
-    // Send request to Azure OpenAI model
-    ChatCompletions response = client.GetChatCompletions(chatCompletionsOptions);
-    string completion = response.Choices[0].Message.Content;
-    
-    Console.WriteLine("Summary: " + completion + "\n");
+   };
+
+   // Send request to Azure OpenAI model
+   ChatCompletions response = client.GetChatCompletions(chatCompletionsOptions);
+   string completion = response.Choices[0].Message.Content;
+
+   Console.WriteLine("Summary: " + completion + "\n");
     ```
 
-    **Python**
+    **Python**: test-openai-model.py
 
     ```python
-    # Initialize the Azure OpenAI client
-    client = AzureOpenAI(
+   # Initialize the Azure OpenAI client
+   client = AzureOpenAI(
             azure_endpoint = azure_oai_endpoint, 
             api_key=azure_oai_key,  
             api_version="2023-05-15"
             )
-    
-    # Send request to Azure OpenAI model
-    response = client.chat.completions.create(
-        model=azure_oai_model,
-        temperature=0.7,
-        max_tokens=120,
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Summarize the following text in 20 words or less:\n" + text}
-        ]
+
+   # Send request to Azure OpenAI model
+   response = client.chat.completions.create(
+       model=azure_oai_model,
+       temperature=0.7,
+       max_tokens=120,
+       messages=[
+           {"role": "system", "content": "You are a helpful assistant."},
+           {"role": "user", "content": "Summarize the following text in 20 words or less:\n" + text}
+       ]
     )
     
     print("Summary: " + response.choices[0].message.content + "\n")
     ```
 
-## アプリケーションを実行する
+3. コードファイルに変更を保存します。
 
-アプリが構成されたので、それを実行してモデルに要求を送信し、応答を確認します。
+## アプリケーションをテストする
 
-1. Cloud Shell bash ターミナルで、優先する言語のフォルダーに移動します。
-1. アプリケーションを実行します。
+アプリが設定されたので、実行してリクエストをモデルに送信し、応答を観察しましょう。
 
-    - **C#** : `dotnet run`
+1. **エクスプローラー**ペインで、**Labfiles/02-nlp-azure-openai/text-files**フォルダを展開し、**sample-text.txt**ファイルを開きます。このテキストファイルには、モデルに要約してもらうテキストが含まれています。
+
+2. インタラクティブなターミナルペインで、好みの言語のフォルダコンテキストを確認してください。次に、アプリケーションを実行するための以下のコマンドを入力します。
+
+    - **C#**: `dotnet run`
     - **Python**: `python test-openai-model.py`
 
-1. サンプル テキスト ファイルの要約を確認します。
-1. 優先する言語のコード ファイルに移動し、*temperature* の値を `1` に変更します。 ファイルを保存します。
-1. アプリケーションをもう一度実行し、出力を確認します。
+    > **Tip**: ターミナルツールバーの**パネルサイズを最大化する** (**^**) アイコンを使用して、コンソールテキストをより多く表示できます。
 
-多くの場合、温度を上げると、ランダム性が高くなるため、同じテキストを指定した場合でも概要が変化します。 これを数回実行して、出力がどのように変化するかを確認できます。 同じ入力で温度に異なる値を使用してみてください。
+3. サンプルテキストファイルの要約を観察します。
+4. 好みの言語のコードファイルで、リクエスト内の*temperature*パラメータの値を**1.0**に変更してファイルを保存します。
+5. アプリケーションを再度実行し、出力を観察します。
+6. アプリを数回再実行し、毎回の出力をメモします - 出力は変わる可能性があります。
+
+温度を上げると、同じテキストを提供しても、ランダム性が増すため、要約が変わることがよくあります。出力がどのように変わるかを確認するために、何度か実行してみてください。同じ入力に対して異なる温度の値を試してみてください。
 
 ## クリーンアップ
 
-Azure OpenAI リソースでの作業が完了したら、[Azure portal](https://portal.azure.com?azure-portal=true) 内のデプロイまたはリソース全体を必ず削除してください。
+Azure OpenAIリソースの使用が終わったら、**Azureポータル**の `https://portal.azure.com` でデプロイメントを削除するか、リソース全体を削除することを忘れないでください。
